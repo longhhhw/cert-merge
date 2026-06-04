@@ -99,7 +99,7 @@ tr:hover{background:#f8f7ff}
 </div>
 
 <div class="section hidden" id="resultSection">
-  <h2>📊 合并总表 <span class="note">（预览前200行，点击下载获取全部）</span></h2>
+  <h2>📊 合并总表 <span class="note">（预览前500行）</span> <span style="color:#4f46e5;font-size:14px">📥 完整数据请点击下方下载按钮</span></h2>
   <div class="filter-bar">
     <select id="filterConflict"><option value="all">全部</option><option value="conflict">仅冲突</option><option value="match">仅一致</option><option value="only">仅单方</option></select>
     <input type="text" id="filterSearch" placeholder="搜索...">
@@ -145,7 +145,7 @@ function parseData(data,type){
     const s=String(h[i]||'').toLowerCase();
     if(/车型|车辆型号|model|车名/i.test(s))mCol=i;
     if(type==='gg'&&/公告|gg|备案/i.test(s))cCol=i;
-    if(type==='c3'&&/3c|ccc/i.test(s))cCol=i;
+    if(type==='c3'&&(/3c|ccc|序号|编码/i.test(s)||(cCol===-1&&i===0)))cCol=i;
     if(/参数值|值|value/i.test(s)&&!/约束|默认|类型/i.test(s))vCol=i;
   }
   // Fallback: use first 2 columns as code+value, optional 3rd as model
@@ -154,7 +154,7 @@ function parseData(data,type){
     const row=data[i];if(!row||!row.length)continue;
     const model=mCol>=0?String(row[mCol]||'').trim():'';
     const code=cCol>=0?String(row[cCol]||'').trim():String(row[0]||'').trim();
-    const val=vCol>=0?String(row[vCol]||'').trim():String(row[1]||'').trim();
+    const val=vCol>=0?String(row[vCol]||'').trim():(type==='c3'&&row.length>2?String(row[2]||'').trim():String(row[1]||'').trim());
     if(code&&val)r.push({model,code,val});
   }
   return r;
@@ -162,7 +162,7 @@ function parseData(data,type){
 
 function checkReady(){
   const b=document.getElementById('mergeBtn');
-  b.disabled=!((ggData&&ggData.length)||(c3Data&&c3Data.length));
+  b.disabled=!(ggData&&ggData.length&&c3Data&&c3Data.length);
   if(!b.disabled)b.textContent='🔄 开始合并 ('+ggData.length+'条公告 + '+c3Data.length+'条3C)';
 }
 
@@ -231,7 +231,7 @@ function renderResult(data){
   else if(f==='match')fd=data.filter(d=>d.st==='一致');
   else if(f==='only')fd=data.filter(d=>d.st!=='一致'&&d.st!=='冲突');
   if(s)fd=fd.filter(d=>(d.model+d.ncc+d.name).toLowerCase().includes(s));
-  const show=fd.slice(0,200);
+  const show=fd.slice(0,500);
   tb.innerHTML='';
   for(const d of show){
     let tag='';
@@ -240,7 +240,7 @@ function renderResult(data){
     else tag='<span class="tag tag-only">'+d.st+'</span>';
     tb.innerHTML+='<tr class="'+(d.st==='冲突'?'conflict-row':'')+'"><td>'+esc(d.model||'—')+'</td><td>'+esc(d.ncc)+'</td><td>'+esc(d.name)+'</td><td><b>'+esc(d.fv)+'</b></td><td>'+esc(d.ggV)+'</td><td>'+esc(d.c3V)+'</td><td>'+tag+'</td></tr>';
   }
-  if(fd.length>200)tb.innerHTML+='<tr><td colspan="7" class="empty">... 还有 '+(fd.length-200)+' 行，请下载查看完整数据</td></tr>';
+  if(fd.length>500)tb.innerHTML+='<tr><td colspan="7" class="empty">... 还有 '+(fd.length-500)+' 行，请下载查看完整数据</td></tr>';
 }
 
 document.getElementById('filterConflict').addEventListener('change',()=>renderResult(mergedData));
