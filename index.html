@@ -162,7 +162,7 @@ function parseData(data,type){
 
 function checkReady(){
   const b=document.getElementById('mergeBtn');
-  b.disabled=!(ggData&&ggData.length&&c3Data&&c3Data.length);
+  b.disabled=!((ggData&&ggData.length)||(c3Data&&c3Data.length));
   if(!b.disabled)b.textContent='🔄 开始合并 ('+ggData.length+'条公告 + '+c3Data.length+'条3C)';
 }
 
